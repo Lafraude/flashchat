@@ -1,0 +1,92 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "test",
+      "email": "test",
+      "password": "test"
+    },
+    {
+      "id": 2,
+      "name": "testt",
+      "email": "testt",
+      "password": "testt"
+    }
+  ],
+  "contacts": [
+    {
+      "userId": 1,
+      "contactId": 2
+    },
+    {
+      "userId": 2,
+      "contactId": 1
+    }
+  ],
+  "messages": [
+    {
+      "id": 1,
+      "senderId": 2,
+      "receiverId": 1,
+      "type": "text",
+      "content": "test",
+      "timestamp": 1745678991436
+    },
+    {
+      "id": 2,
+      "senderId": 1,
+      "receiverId": 2,
+      "type": "image",
+      "content": "/media/1/1745679223464_Capture dâÃ©cran 2025-04-20 183917.png",
+      "timestamp": 1745679223468
+    },
+    {
+      "id": 3,
+      "senderId": 1,
+      "receiverId": 2,
+      "type": "text",
+      "content": "test",
+      "timestamp": 1745679272904
+    },
+    {
+      "id": 4,
+      "senderId": 1,
+      "receiverId": 2,
+      "type": "image",
+      "content": "/media/1/1745679281325_Capture dâÃ©cran 2025-04-20 183917.png",
+      "timestamp": 1745679281328
+    },
+    {
+      "senderId": 1,
+      "receiverId": 2,
+      "type": "text",
+      "content": "test1test1",
+      "id": 5,
+      "timestamp": 1745679304675
+    },
+    {
+      "senderId": 1,
+      "receiverId": 2,
+      "type": "text",
+      "content": "test1",
+      "id": 6,
+      "timestamp": 1745679305247
+    },
+    {
+      "senderId": 1,
+      "receiverId": 2,
+      "type": "text",
+      "content": "test1",
+      "id": 7,
+      "timestamp": 1745679305806
+    },
+    {
+      "senderId": 1,
+      "receiverId": 2,
+      "type": "text",
+      "content": "test1",
+      "id": 8,
+      "timestamp": 1745679306435
+    }
+  ]
+}

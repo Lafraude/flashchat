@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlashChat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: all 0.2s ease;
+        }
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            height: 100vh;
+        }
+        .container {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background-color: #1e1e1e;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .back-button {
+            position: absolute;
+            left: 15px;
+            top: 15px;
+            color: white;
+            font-size: 18px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transform: translateX(0);
+            transition: transform 0.3s ease;
+        }
+        .back-button:hover {
+            transform: translateX(-3px);
+        }
+        .app-title {
+            font-size: 20px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            background: linear-gradient(45deg, #6e57ff, #9173ff);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        .screens {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .hidden {
+            transform: translateX(100%);
+        }
+
+        .auth-screen {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            background-color: #121212;
+        }
+        .auth-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #9173ff;
+            text-align: center;
+            position: relative;
+        }
+        .auth-title::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 3px;
+            background: linear-gradient(90deg, #6e57ff, #9173ff);
+            border-radius: 3px;
+        }
+        .form-group {
+            width: 100%;
+            max-width: 300px;
+        }
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #333;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 16px;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            outline: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        input:focus {
+            border-color: #6e57ff;
+            box-shadow: 0 0 0 2px rgba(110, 87, 255, 0.3);
+        }
+        button {
+            width: 100%;
+            padding: 12px 15px;
+            background: linear-gradient(45deg, #6e57ff, #9173ff);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        button::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+            transition: transform 0.5s, opacity 0.3s;
+        }
+        button:active::after {
+            transform: translate(-50%, -50%) scale(2);
+            opacity: 0.3;
+        }
+        .toggle-auth {
+            margin-top: 15px;
+            color: #9173ff;
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 14px;
+            transition: color 0.2s ease;
+        }
+        .toggle-auth:hover {
+            color: #6e57ff;
+        }
+
+        .contacts-screen {
+            background-color: #121212;
+            display: flex;
+            flex-direction: column;
+        }
+        .contact-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            scrollbar-width: thin;
+            scrollbar-color: #6e57ff #1e1e1e;
+        }
+        .contact-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        .contact-list::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+        .contact-list::-webkit-scrollbar-thumb {
+            background-color: #6e57ff;
+            border-radius: 6px;
+        }
+        .contact {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .contact:hover {
+            background-color: rgba(110, 87, 255, 0.1);
+        }
+        .contact-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #6e57ff, #9173ff);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 500;
+            margin-right: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        .contact-info {
+            flex: 1;
+        }
+        .contact-name {
+            font-weight: 500;
+            color: #e0e0e0;
+            margin-bottom: 4px;
+        }
+        .contact-last-message {
+            font-size: 13px;
+            color: #999;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+        .add-contact {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #6e57ff, #9173ff);
+            color: white;
+            font-size: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(110, 87, 255, 0.5);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .add-contact:hover {
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 5px 15px rgba(110, 87, 255, 0.7);
+        }
+
+        .chat-screen {
+            background-color: #121212;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-header {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            background-color: #1e1e1e;
+            color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .chat-contact-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #6e57ff, #9173ff);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 500;
+            margin-right: 10px;
+        }
+        .chat-contact-name {
+            font-size: 18px;
+            font-weight: 500;
+        }
+        .chat-status {
+            font-size: 12px;
+            color: #999;
+            margin-left: 10px;
+        }
+        .chat-typing {
+            display: none;
+            align-items: center;
+            font-size: 12px;
+            color: #9173ff;
+            margin-left: auto;
+        }
+        .typing-indicator {
+            display: inline-flex;
+            margin-left: 4px;
+        }
+        .typing-dot {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background-color: #9173ff;
+            margin-right: 3px;
+            animation: typing-animation 1.4s infinite ease-in-out;
+        }
+        .typing-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+            margin-right: 0;
+        }
+        @keyframes typing-animation {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-4px);
+            }
+        }
+        .messages {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            overflow-y: auto;
+            background-color: #121212;
+            background-image: radial-gradient(rgba(110, 87, 255, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            scrollbar-width: thin;
+            scrollbar-color: #6e57ff #1e1e1e;
+        }
+        .messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        .messages::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+        .messages::-webkit-scrollbar-thumb {
+            background-color: #6e57ff;
+            border-radius: 6px;
+        }
+        .message {
+            max-width: 70%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            margin-bottom: 10px;
+            word-wrap: break-word;
+            animation: message-appear 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+        @keyframes message-appear {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .received {
+            align-self: flex-start;
+            background-color: #2a2a2a;
+            color: #e0e0e0;
+            border-bottom-left-radius: 5px;
+        }
+        .sent {
+            align-self: flex-end;
+            background: linear-gradient(45deg, #6e57ff, #9173ff);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+        .message-time {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-top: 5px;
+            text-align: right;
+        }
+        .message-status {
+            font-size: 12px;
+            margin-left: 5px;
+        }
+        .message-input {
+            display: flex;
+            padding: 15px;
+            background-color: #1e1e1e;
+            border-top: 1px solid #333;
+        }
+        .message-input input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #333;
+            border-radius: 20px;
+            margin-right: 10px;
+            font-size: 16px;
+            background-color: #2a2a2a;
+            color: #e0e0e0;
+            margin-bottom: 0;
+        }
+        .attachment-button {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background-color: #2a2a2a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .attachment-button:hover {
+            background-color: #333;
+        }
+        .send-button {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #6e57ff, #9173ff);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .send-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(110, 87, 255, 0.5);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(3px);
+        }
+        .modal-content {
+            background-color: #1e1e1e;
+            padding: 25px;
+            border-radius: 12px;
+            width: 80%;
+            max-width: 320px;
+            transform: scale(0.95);
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        }
+        .modal.active .modal-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+        .modal-title {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #9173ff;
+            position: relative;
+        }
+        .modal-title::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 40px;
+            height: 3px;
+            background: linear-gradient(90deg, #6e57ff, #9173ff);
+            border-radius: 3px;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 25px;
+        }
+        .modal-button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: all 0.2s ease;
+        }
+        .modal-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        .cancel-button {
+            background-color: #2a2a2a;
+            color: #e0e0e0;
+        }
+        .confirm-button {
+            background: linear-gradient(45deg, #6e57ff, #9173ff);
+            color: white;
+        }
+        
+        .media-preview {
+            width: 100%;
+            max-height: 200px;
+            object-fit: contain;
+            margin-bottom: 10px;
+            display: none;
+            border-radius: 8px;
+            animation: fade-in 0.3s ease;
+        }
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .message-media {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 5px;
+        }
+        
+        .status-message {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0,0,0,0.8);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.3);
+            animation: status-appear 0.3s ease;
+        }
+        @keyframes status-appear {
+            from {
+                opacity: 0;
+                transform: translate(-50%, 20px);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <button class="back-button" id="backButton" style="display: none;">←</button>
+            <h1 class="app-title">FlashChat</h1>
+        </div>
+        
+        <div class="screens">
+            <!-- Login Screen -->
+            <div class="screen auth-screen" id="loginScreen">
+                <h2 class="auth-title">Connexion</h2>
+                <div class="form-group">
+                    <input type="email" id="loginEmail" placeholder="Email" required>
+                    <input type="password" id="loginPassword" placeholder="Mot de passe" required>
+                    <button id="loginButton">Se connecter</button>
+                </div>
+                <p class="toggle-auth" id="showRegister">Pas encore de compte ? S'inscrire</p>
+            </div>
+            
+            <!-- Register Screen -->
+            <div class="screen auth-screen hidden" id="registerScreen">
+                <h2 class="auth-title">Inscription</h2>
+                <div class="form-group">
+                    <input type="text" id="registerName" placeholder="Nom complet" required>
+                    <input type="email" id="registerEmail" placeholder="Email" required>
+                    <input type="password" id="registerPassword" placeholder="Mot de passe" required>
+                    <button id="registerButton">S'inscrire</button>
+                </div>
+                <p class="toggle-auth" id="showLogin">Déjà un compte ? Se connecter</p>
+            </div>
+            
+            <!-- Contacts Screen -->
+            <div class="screen contacts-screen hidden" id="contactsScreen">
+                <div class="contact-list" id="contactList">
+                    <!-- Contacts will be added here dynamically -->
+                </div>
+                <div class="add-contact" id="addContactButton">+</div>
+            </div>
+            
+            <!-- Chat Screen -->
+            <div class="screen chat-screen hidden" id="chatScreen">
+                <div class="chat-header">
+                    <div class="chat-typing">
+                        En train d'écrire
+                        <div class="typing-indicator">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                    </div>
+                    <div class="chat-contact-avatar" id="chatContactAvatar">?</div>
+                    <div class="chat-contact-name" id="chatContactName">Contact</div>
+                </div>
+                <div class="messages" id="messages">
+                    <!-- Messages will be added here dynamically -->
+                </div>
+                <img id="mediaPreview" class="media-preview" alt="Media preview">
+                <div class="message-input">
+                    <div class="attachment-button" id="attachmentButton">📎</div>
+                    <input type="text" id="messageInput" placeholder="Message...">
+                    <div class="send-button" id="sendButton">➤</div>
+                </div>
+                <input type="file" id="fileInput" accept="image/*,video/*" style="display: none;">
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add Contact Modal -->
+    <div class="modal" id="addContactModal">
+        <div class="modal-content">
+            <h3 class="modal-title">Ajouter un contact</h3>
+            <input type="email" id="contactEmail" placeholder="Email du contact">
+            <div class="modal-buttons">
+                <button class="modal-button cancel-button" id="cancelAddContact">Annuler</button>
+                <button class="modal-button confirm-button" id="confirmAddContact">Ajouter</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Status Message -->
+    <div class="status-message" id="statusMessage"></div>
+
+    <script>
+        // Initial database structure
+        const db = {
+            users: [
+                { id: 1, name: "Jean Dupont", email: "jean@exemple.fr", password: "password123" },
+                { id: 2, name: "Marie Martin", email: "marie@exemple.fr", password: "password123" }
+            ],
+            contacts: [
+                { userId: 1, contactId: 2 },
+                { userId: 2, contactId: 1 }
+            ],
+            messages: [
+                { id: 1, senderId: 1, receiverId: 2, type: "text", content: "Bonjour Marie!", timestamp: new Date(2025, 3, 25, 14, 30).getTime() },
+                { id: 2, senderId: 2, receiverId: 1, type: "text", content: "Salut Jean! Comment vas-tu?", timestamp: new Date(2025, 3, 25, 14, 31).getTime() }
+            ]
+        };
+        
+        // Current user and current chat
+        let currentUser = null;
+        let currentChat = null;
+        let selectedFile = null;
+        
+        // DOM elements
+        const loginScreen = document.getElementById("loginScreen");
+        const registerScreen = document.getElementById("registerScreen");
+        const contactsScreen = document.getElementById("contactsScreen");
+        const chatScreen = document.getElementById("chatScreen");
+        const backButton = document.getElementById("backButton");
+        const addContactModal = document.getElementById("addContactModal");
+        const mediaPreview = document.getElementById("mediaPreview");
+        const statusMessage = document.getElementById("statusMessage");
+        
+        // Load data from server on startup
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await loadDatabaseFromServer();
+            } catch (error) {
+                console.error("Erreur lors du chargement des données:", error);
+                // Continue with initial data if loading fails
+            }
+        });
+
+        // Fonction pour montrer un message de statut temporaire
+        function showStatus(message, duration = 3000) {
+            statusMessage.textContent = message;
+            statusMessage.style.display = "block";
+            
+            setTimeout(() => {
+                statusMessage.style.display = "none";
+            }, duration);
+        }
+
+        // Fonctions pour communiquer avec le serveur
+        async function loadDatabaseFromServer() {
+            try {
+                const response = await fetch('/api/database');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data) {
+                        // Mettre à jour la base de données locale avec les données du serveur
+                        Object.assign(db, data);
+                    }
+                }
+            } catch (error) {
+                console.error("Erreur lors du chargement de la base de données:", error);
+                throw error;
+            }
+        }
+
+        async function saveDatabaseToServer() {
+            try {
+                const response = await fetch('/api/database', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(db)
+                });
+                
+                if (!response.ok) {
+                    throw new Error("Erreur lors de la sauvegarde des données");
+                }
+                
+                return true;
+            } catch (error) {
+                console.error("Erreur lors de la sauvegarde de la base de données:", error);
+                showStatus("Erreur de sauvegarde. Veuillez réessayer.");
+                throw error;
+            }
+        }
+
+        async function uploadMedia(file) {
+            try {
+                const formData = new FormData();
+                formData.append('media', file);
+                formData.append('userId', currentUser.id);
+                
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error("Erreur lors de l'upload du média");
+                }
+                
+                const data = await response.json();
+                return data.filePath; // Chemin du fichier sur le serveur
+            } catch (error) {
+                console.error("Erreur lors de l'upload du média:", error);
+                showStatus("Erreur d'upload. Veuillez réessayer.");
+                throw error;
+            }
+        }
+        
+        // Auth screen toggle
+        document.getElementById("showRegister").addEventListener("click", () => {
+            loginScreen.classList.add("hidden");
+            registerScreen.classList.remove("hidden");
+        });
+        
+        document.getElementById("showLogin").addEventListener("click", () => {
+            registerScreen.classList.add("hidden");
+            loginScreen.classList.remove("hidden");
+        });
+
+        // Login
+        document.getElementById("loginButton").addEventListener("click", async () => {
+            const email = document.getElementById("loginEmail").value;
+            const password = document.getElementById("loginPassword").value;
+            
+            const user = db.users.find(u => u.email === email && u.password === password);
+            if (user) {
+                currentUser = user;
+                showContactsScreen();
+                loadContacts();
+            } else {
+                showStatus("Email ou mot de passe incorrect");
+            }
+        });
+
+        // Register
+        document.getElementById("registerButton").addEventListener("click", async () => {
+            const name = document.getElementById("registerName").value;
+            const email = document.getElementById("registerEmail").value;
+            const password = document.getElementById("registerPassword").value;
+            
+            if (!name || !email || !password) {
+                showStatus("Veuillez remplir tous les champs");
+                return;
+            }
+            
+            const userExists = db.users.some(u => u.email === email);
+            if (userExists) {
+                showStatus("Cet email est déjà utilisé");
+                return;
+            }
+            
+            const newUser = {
+                id: db.users.length + 1,
+                name,
+                email,
+                password
+            };
+            
+            db.users.push(newUser);
+            currentUser = newUser;
+            
+            try {
+                await saveDatabaseToServer();
+                showContactsScreen();
+                showStatus("Compte créé avec succès");
+            } catch (error) {
+                // Erreur déjà gérée dans la fonction saveDatabaseToServer
+            }
+        });
+
+        // Back button
+        backButton.addEventListener("click", () => {
+            if (!chatScreen.classList.contains("hidden")) {
+                chatScreen.classList.add("hidden");
+                contactsScreen.classList.remove("hidden");
+                currentChat = null;
+                backButton.style.display = "none";
+            }
+        });
+
+        // Add contact
+        document.getElementById("addContactButton").addEventListener("click", () => {
+            addContactModal.style.display = "flex";
+        });
+        
+        document.getElementById("cancelAddContact").addEventListener("click", () => {
+            addContactModal.style.display = "none";
+            document.getElementById("contactEmail").value = "";
+        });
+        
+        document.getElementById("confirmAddContact").addEventListener("click", async () => {
+            const contactEmail = document.getElementById("contactEmail").value;
+            
+            if (!contactEmail) {
+                showStatus("Veuillez entrer un email");
+                return;
+            }
+            
+            const contact = db.users.find(u => u.email === contactEmail);
+            if (!contact) {
+                showStatus("Utilisateur non trouvé");
+                return;
+            }
+            
+            if (contact.id === currentUser.id) {
+                showStatus("Vous ne pouvez pas vous ajouter vous-même");
+                return;
+            }
+            
+            const contactExists = db.contacts.some(c => 
+                (c.userId === currentUser.id && c.contactId === contact.id) ||
+                (c.userId === contact.id && c.contactId === currentUser.id)
+            );
+            
+            if (contactExists) {
+                showStatus("Ce contact est déjà dans votre liste");
+                return;
+            }
+            
+            db.contacts.push({
+                userId: currentUser.id,
+                contactId: contact.id
+            });
+            
+            try {
+                await saveDatabaseToServer();
+                addContactModal.style.display = "none";
+                document.getElementById("contactEmail").value = "";
+                loadContacts();
+                showStatus("Contact ajouté avec succès");
+            } catch (error) {
+                // Erreur déjà gérée dans la fonction saveDatabaseToServer
+            }
+        });
+
+        // Attachment button
+        document.getElementById("attachmentButton").addEventListener("click", () => {
+            document.getElementById("fileInput").click();
+        });
+        
+        document.getElementById("fileInput").addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                selectedFile = file;
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    mediaPreview.src = event.target.result;
+                    mediaPreview.style.display = "block";
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Send message
+        document.getElementById("sendButton").addEventListener("click", sendMessage);
+        document.getElementById("messageInput").addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+                sendMessage();
+            }
+        });
+
+        async function sendMessage() {
+            const messageInput = document.getElementById("messageInput");
+            const messageText = messageInput.value.trim();
+            
+            if ((!messageText && !selectedFile) || !currentChat) return;
+            
+            if (messageText) {
+                const newMessage = {
+                    id: db.messages.length + 1,
+                    senderId: currentUser.id,
+                    receiverId: currentChat.id,
+                    type: "text",
+                    content: messageText,
+                    timestamp: new Date().getTime()
+                };
+                
+                db.messages.push(newMessage);
+                addMessageToChat(newMessage);
+                messageInput.value = "";
+                
+                try {
+                    await saveDatabaseToServer();
+                } catch (error) {
+                    // Erreur déjà gérée dans la fonction saveDatabaseToServer
+                }
+            }
+            
+            if (selectedFile) {
+                showStatus("Envoi du média en cours...");
+                
+                try {
+                    const filePath = await uploadMedia(selectedFile);
+                    
+                    const fileType = selectedFile.type.startsWith("image/") ? "image" : "video";
+                    const newMediaMessage = {
+                        id: db.messages.length + 1,
+                        senderId: currentUser.id,
+                        receiverId: currentChat.id,
+                        type: fileType,
+                        content: filePath, // Chemin du fichier sur le serveur
+                        timestamp: new Date().getTime()
+                    };
+                    
+                    db.messages.push(newMediaMessage);
+                    addMessageToChat(newMediaMessage);
+                    
+                    await saveDatabaseToServer();
+                    
+                    // Reset media preview
+                    mediaPreview.src = "";
+                    mediaPreview.style.display = "none";
+                    selectedFile = null;
+                    document.getElementById("fileInput").value = "";
+                    
+                    showStatus("Média envoyé avec succès");
+                } catch (error) {
+                    showStatus("Erreur lors de l'envoi du média");
+                }
+            }
+        }
+
+        function showContactsScreen() {
+            loginScreen.classList.add("hidden");
+            registerScreen.classList.add("hidden");
+            contactsScreen.classList.remove("hidden");
+            chatScreen.classList.add("hidden");
+            backButton.style.display = "none";
+        }
+
+        function loadContacts() {
+            const contactList = document.getElementById("contactList");
+            contactList.innerHTML = "";
+            
+            // Get contact IDs for the current user
+            const contactIds = db.contacts
+                .filter(c => c.userId === currentUser.id)
+                .map(c => c.contactId);
+            
+            contactIds.push(...db.contacts
+                .filter(c => c.contactId === currentUser.id)
+                .map(c => c.userId));
+            
+            // Remove duplicates
+            const uniqueContactIds = [...new Set(contactIds)];
+            
+            // Get contact details and create elements
+            uniqueContactIds.forEach(contactId => {
+                const contact = db.users.find(u => u.id === contactId);
+                if (!contact) return;
+                
+                const contactElement = document.createElement("div");
+                contactElement.className = "contact";
+                contactElement.innerHTML = `
+                    <div class="contact-avatar">${contact.name.charAt(0)}</div>
+                    <div class="contact-info">
+                        <div class="contact-name">${contact.name}</div>
+                    </div>
+                `;
+                
+                contactElement.addEventListener("click", () => {
+                    openChat(contact);
+                });
+                
+                contactList.appendChild(contactElement);
+            });
+        }
+
+        function openChat(contact) {
+            currentChat = contact;
+            
+            document.getElementById("chatContactAvatar").textContent = contact.name.charAt(0);
+            document.getElementById("chatContactName").textContent = contact.name;
+            
+            contactsScreen.classList.add("hidden");
+            chatScreen.classList.remove("hidden");
+            backButton.style.display = "block";
+            
+            loadMessages();
+        }
+
+        function loadMessages() {
+            const messagesContainer = document.getElementById("messages");
+            messagesContainer.innerHTML = "";
+            
+            const chatMessages = db.messages.filter(m => 
+                (m.senderId === currentUser.id && m.receiverId === currentChat.id) ||
+                (m.senderId === currentChat.id && m.receiverId === currentUser.id)
+            ).sort((a, b) => a.timestamp - b.timestamp);
+            
+            chatMessages.forEach(message => {
+                addMessageToChat(message);
+            });
+            
+            // Scroll to bottom
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function addMessageToChat(message) {
+            const messagesContainer = document.getElementById("messages");
+            const messageElement = document.createElement("div");
+            
+            const isSent = message.senderId === currentUser.id;
+            messageElement.className = `message ${isSent ? 'sent' : 'received'}`;
+            
+            if (message.type === "text") {
+                messageElement.textContent = message.content;
+            } else if (message.type === "image" || message.type === "video") {
+                if (message.type === "image") {
+                    messageElement.innerHTML = `
+                        <img src="${message.content}" class="message-media" alt="Image">
+                    `;
+                } else {
+                    messageElement.innerHTML = `
+                        <video src="${message.content}" class="message-media" controls></video>
+                    `;
+                }
+            }
+            
+            messagesContainer.appendChild(messageElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Simulation de messages en temps réel
+        
+    </script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // Initialiser Socket.IO
+        const socket = io();
+        
+        // Variables globales pour conserver la connexion socket
+        let isSocketConnected = false;
+        
+        // Fonction pour se connecter au socket lors de la connexion
+        function connectSocket(userId) {
+            socket.emit('userConnected', userId);
+            isSocketConnected = true;
+            
+            // Écouter les nouveaux messages
+            socket.on('messageReceived', (message) => {
+                // Ajouter le message à la conversation si la conversation est ouverte
+                if (currentChat && message.senderId === currentChat.id) {
+                    addMessageToChat(message);
+                }
+            });
+        }
+        
+        // Mettre à jour la fonction login pour connecter le socket
+        document.getElementById("loginButton").addEventListener("click", async () => {
+            const email = document.getElementById("loginEmail").value;
+            const password = document.getElementById("loginPassword").value;
+            
+            const user = db.users.find(u => u.email === email && u.password === password);
+            if (user) {
+                currentUser = user;
+                showContactsScreen();
+                loadContacts();
+                // Connecter le socket
+                connectSocket(user.id);
+            } else {
+                showStatus("Email ou mot de passe incorrect");
+            }
+        });
+        
+        // Mettre à jour la fonction register pour connecter le socket
+        document.getElementById("registerButton").addEventListener("click", async () => {
+            // Votre code existant...
+            
+            try {
+                await saveDatabaseToServer();
+                showContactsScreen();
+                showStatus("Compte créé avec succès");
+                // Connecter le socket
+                connectSocket(newUser.id);
+            } catch (error) {
+                // Erreur déjà gérée...
+            }
+        });
+
+        // Variables pour gérer l'état de frappe
+        let typingTimeout;
+        const TYPING_TIMER_LENGTH = 1000; // 1 secondes sans frappe = arrêt de l'indicateur
+
+        // Écouter quand l'utilisateur commence à taper
+        document.getElementById("messageInput").addEventListener("input", function() {
+            if (currentChat && currentUser) {
+                // Effacer le timeout existant à chaque frappe
+                clearTimeout(typingTimeout);
+
+                // Envoyer l'événement "startTyping" au serveur
+                socket.emit('startTyping', {
+                    userId: currentUser.id,
+                    receiverId: currentChat.id
+                });
+
+                // Définir un délai avant d'envoyer "stopTyping"
+                typingTimeout = setTimeout(() => {
+                    socket.emit('stopTyping', {
+                        userId: currentUser.id,
+                        receiverId: currentChat.id
+                    });
+                }, TYPING_TIMER_LENGTH);
+            }
+        });
+
+        // Écouter quand un utilisateur est en train d'écrire
+        socket.on('userTyping', (userId) => {
+            if (currentChat && userId === currentChat.id) {
+                document.querySelector('.chat-typing').style.display = "flex";
+            }
+        });
+
+        // Écouter quand un utilisateur arrête d'écrire
+        socket.on('userStoppedTyping', (userId) => {
+            if (currentChat && userId === currentChat.id) {
+                document.querySelector('.chat-typing').style.display = "none";
+            }
+        });
+
+        // Assurez-vous que l'indicateur de frappe est désactivé quand vous changez de conversation
+        function openChat(contact) {
+            currentChat = contact;
+
+            document.getElementById("chatContactAvatar").textContent = contact.name.charAt(0);
+            document.getElementById("chatContactName").textContent = contact.name;
+
+            // Cacher l'indicateur de frappe lors du changement de chat
+            document.querySelector('.chat-typing').style.display = "none";
+
+            contactsScreen.classList.add("hidden");
+            chatScreen.classList.remove("hidden");
+            backButton.style.display = "block";
+
+            loadMessages();
+        }
+        
+        // Modifier la fonction sendMessage pour utiliser les sockets
+        async function sendMessage() {
+            const messageInput = document.getElementById("messageInput");
+            const messageText = messageInput.value.trim();
+            
+            if ((!messageText && !selectedFile) || !currentChat) return;
+            
+            if (currentChat) {
+                socket.emit('stopTyping', {
+                    userId: currentUser.id,
+                    receiverId: currentChat.id
+                });
+            }
+
+            if (messageText) {
+                const newMessage = {
+                    senderId: currentUser.id,
+                    receiverId: currentChat.id,
+                    type: "text",
+                    content: messageText
+                };
+                
+                // Envoyer le message via socket
+                socket.emit('newMessage', newMessage);
+                
+                // Ajouter le message à la conversation locale
+                // (le serveur attribuera l'id et le timestamp)
+                addMessageToChat({
+                    ...newMessage,
+                    id: Date.now(), // ID temporaire
+                    timestamp: new Date().getTime()
+                });
+                
+                messageInput.value = "";
+            }
+            
+            if (selectedFile) {
+                // Pour les médias, continuer à utiliser l'API HTTP
+                // car Socket.IO n'est pas idéal pour les grands fichiers
+                showStatus("Envoi du média en cours...");
+                
+                try {
+                    const filePath = await uploadMedia(selectedFile);
+                    
+                    const fileType = selectedFile.type.startsWith("image/") ? "image" : "video";
+                    const newMediaMessage = {
+                        senderId: currentUser.id,
+                        receiverId: currentChat.id,
+                        type: fileType,
+                        content: filePath
+                    };
+                    
+                    // Envoyer via socket
+                    socket.emit('newMessage', newMediaMessage);
+                    
+                    // Ajouter à la conversation locale 
+                    addMessageToChat({
+                        ...newMediaMessage,
+                        id: Date.now(), // ID temporaire
+                        timestamp: new Date().getTime()
+                    });
+                    
+                    // Reset media preview
+                    mediaPreview.src = "";
+                    mediaPreview.style.display = "none";
+                    selectedFile = null;
+                    document.getElementById("fileInput").value = "";
+                    
+                    showStatus("Média envoyé avec succès");
+                } catch (error) {
+                    showStatus("Erreur lors de l'envoi du média");
+                }
+            }
+        }
+        
+        // Supprimer la simulation de messages car nous utilisons maintenant des sockets
+        // Supprimez ou commentez le code setInterval qui génère des messages aléatoires
+    </script>
+</body>
+</html>
