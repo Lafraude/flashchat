@@ -1,0 +1,28 @@
+<svg viewBox="0 0 1125 2436" xmlns="http://www.w3.org/2000/svg">
+  <!-- Arrière-plan dégradé -->
+  <defs>
+    <linearGradient id="splashGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#121212" />
+      <stop offset="100%" stop-color="#2a2a2a" />
+    </linearGradient>
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6e57ff" />
+      <stop offset="100%" stop-color="#9173ff" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Fond -->
+  <rect width="1125" height="2436" fill="url(#splashGradient)" />
+  
+  <!-- Cercle central -->
+  <circle cx="562.5" cy="1218" r="200" fill="url(#logoGradient)" />
+  
+  <!-- Bulle de message -->
+  <path d="M460 1120C440 1120 425 1135 425 1155V1275C425 1295 440 1310 460 1310H480L510 1340V1310H665C685 1310 700 1295 700 1275V1155C700 1135 685 1120 665 1120H460Z" fill="white" />
+  
+  <!-- Éclair -->
+  <path d="M580 1150L560 1190H595L545 1280L560 1240H530L580 1150Z" fill="url(#logoGradient)" />
+  
+  <!-- Texte FlashChat -->
+  <text x="562.5" y="1500" font-family="'Segoe UI', sans-serif" font-size="72" font-weight="bold" text-anchor="middle" fill="white">FlashChat</text>
+</svg>
