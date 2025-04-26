@@ -4,6 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FlashChat</title>
+
+    <!-- Balises pour PWA sur iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="FlashChat">
+    
+    <!-- Icônes pour l'écran d'accueil iOS -->
+    <link rel="apple-touch-icon" href="icon-120.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="icon-167.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+    
+    <!-- Icône de démarrage (splash screen) -->
+    <link rel="apple-touch-startup-image" href="splash.png">
+    
+    <!-- Manifest pour PWA -->
+    <link rel="manifest" href="manifest.json">
+
     <style>
         * {
             margin: 0;
@@ -556,6 +574,45 @@
                 transform: translate(-50%, 0);
             }
         }
+
+        /* Style pour la bannière d'installation */
+        .install-banner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 15px;
+            background: linear-gradient(45deg, #6e57ff, #9173ff);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 2000;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+        .install-banner.visible {
+            transform: translateY(0);
+        }
+        .install-message {
+            flex: 1;
+            margin-right: 10px;
+        }
+        .install-button {
+            background-color: white;
+            color: #6e57ff;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 15px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-banner {
+            margin-left: 10px;
+            cursor: pointer;
+            font-size: 20px;
+        }
     </style>
 </head>
 <body>
@@ -563,6 +620,17 @@
         <div class="header">
             <button class="back-button" id="backButton" style="display: none;">←</button>
             <h1 class="app-title">FlashChat</h1>
+        </div>
+
+        <!-- Bannière d'installation -->
+        <div class="install-banner" id="installBanner">
+            <div class="install-message">
+                Installez FlashChat sur votre iPhone pour un accès rapide
+            </div>
+            <button class="install-button" id="installButton">
+                Comment installer
+            </button>
+            <div class="close-banner" id="closeBanner">×</div>
         </div>
         
         <div class="screens">
@@ -1258,6 +1326,46 @@
                 }
             }
         }
+
+        // Fonction pour détecter si l'utilisateur est sur iOS Safari
+        function isIOSSafari() {
+            const ua = window.navigator.userAgent;
+            const iOS = !!ua.match(/iPad/i) || !!ua.match(/iPhone/i);
+            const webkit = !!ua.match(/WebKit/i);
+            const standalone = window.navigator.standalone === true;
+            
+            return iOS && webkit && !standalone;
+        }
+        
+        // Vérifier si l'app est déjà installée
+        function isAppInstalled() {
+            return window.navigator.standalone === true;
+        }
+        
+        // Afficher la bannière d'installation pour les utilisateurs iOS Safari
+        document.addEventListener('DOMContentLoaded', function() {
+            const installBanner = document.getElementById('installBanner');
+            const installButton = document.getElementById('installButton');
+            const closeBanner = document.getElementById('closeBanner');
+            
+            // Vérifier si on doit afficher la bannière
+            if (isIOSSafari() && !isAppInstalled() && !localStorage.getItem('installBannerClosed')) {
+                setTimeout(function() {
+                    installBanner.classList.add('visible');
+                }, 2000); // Afficher après 2 secondes
+            }
+            
+            // Gérer le bouton d'installation
+            installButton.addEventListener('click', function() {
+                alert("Pour installer FlashChat:\n\n1. Appuyez sur le bouton de partage en bas de l'écran\n2. Faites défiler et appuyez sur \"Sur l'écran d'accueil\"\n3. Appuyez sur \"Ajouter\" en haut à droite");
+            });
+            
+            // Gérer la fermeture de la bannière
+            closeBanner.addEventListener('click', function() {
+                installBanner.classList.remove('visible');
+                localStorage.setItem('installBannerClosed', 'true');
+            });
+        });
         
         // Supprimer la simulation de messages car nous utilisons maintenant des sockets
         // Supprimez ou commentez le code setInterval qui génère des messages aléatoires
