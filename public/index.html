@@ -1226,6 +1226,11 @@
             const isSent = message.senderId === currentUser.id;
             messageElement.className = `message ${isSent ? 'sent' : 'received'}`;
 
+            // Ajouter un attribut data-temp-id pour les messages temporaires
+            if (message.isTemp) {
+                messageElement.setAttribute('data-temp-id', message.id);
+            }
+        
             if (message.type === "text") {
                 messageElement.textContent = message.content;
             } else if (message.type === "image" || message.type === "video") {
@@ -1239,6 +1244,19 @@
                         e.stopPropagation();
                         showMediaFullscreen(message.content, "image");
                     });
+
+                    // Ajouter un indicateur de chargement si nécessaire
+                    if (message.isTemp) {
+                        const loader = document.createElement('div');
+                        loader.className = 'media-loading';
+                        loader.innerHTML = 'Envoi en cours...';
+                        messageElement.appendChild(loader);
+
+                        // Écouter l'événement de chargement de l'image
+                        imgElement.onload = function() {
+                            messageElement.querySelector('.media-loading')?.remove();
+                        };
+                    }
                 } else {
                     messageElement.innerHTML = `
                         <video src="${message.content}" class="message-media" controls></video>
@@ -1249,18 +1267,32 @@
                         e.stopPropagation();
                         showMediaFullscreen(message.content, "video");
                     });
+
+                    // Ajouter un indicateur de chargement si nécessaire
+                    if (message.isTemp) {
+                        const loader = document.createElement('div');
+                        loader.className = 'media-loading';
+                        loader.innerHTML = 'Envoi en cours...';
+                        messageElement.appendChild(loader);
+
+                        // Écouter l'événement de chargement des métadonnées de la vidéo
+                        videoElement.onloadedmetadata = function() {
+                            messageElement.querySelector('.media-loading')?.remove();
+                        };
+                    }
                 }
             }
-    
-             // Ajouter le timestamp
+        
+            // Ajouter le timestamp
             const timeElement = document.createElement("div");
             timeElement.className = "message-time";
             timeElement.textContent = new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             messageElement.appendChild(timeElement);
-
+        
             messagesContainer.appendChild(messageElement);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
+
         function showMediaFullscreen(src, type) {
             // Créer un conteneur plein écran
             const fullscreenContainer = document.createElement('div');
@@ -1314,28 +1346,33 @@
             
             // Écouter les nouveaux messages
             socket.on('messageReceived', (message) => {
-                // Ajouter le message à la base de données locale
-                db.messages.push(message);
+                const isDuplicate = db.messages.some(m => 
+                    m.senderId === message.senderId && 
+                    m.receiverId === message.receiverId && 
+                    m.timestamp === message.timestamp &&
+                    m.content === message.content
+                );
 
-                // Ajouter le message à la conversation si la conversation est ouverte
-                if (currentChat && message.senderId === currentChat.id) {
-                    addMessageToChat(message);
+                if (!isDuplicate) {
+                    // Ajouter le message à la base de données locale
+                    db.messages.push(message);
+                
+                    // Ajouter le message à la conversation si la conversation est ouverte
+                    if (currentChat && message.senderId === currentChat.id) {
+                        addMessageToChat(message);
 
-                    // Si c'est un média, précharger l'image/vidéo
-                    if (message.type === "image" || message.type === "video") {
-                        const preloadMedia = (message.type === "image") 
-                            ? new Image() 
-                            : document.createElement('video');
-
-                        preloadMedia.src = message.content;
-
-                        // Pour les vidéos, on veut juste précharger les métadonnées
-                        if (message.type === "video") {
-                            preloadMedia.preload = "metadata";
-                        }
+                        // Notification sonore (optionnel)
+                        playNotificationSound();
                     }
                 }
             });
+        }
+
+        function playNotificationSound() {
+           // Créer un élément audio temporaire
+            const audio = new Audio();
+            audio.src = "data:audio/mp3;base64,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AAANIAcAAAICBxGYEMYGMYcGMYoGMY0GMY4GMZAGMZIGMZMGNGoGMhoGMh0GNmoGOioGOjAGPCoGPDAGPjAGOjQGOjYGOjgGOjoGOjwGOj4GOkAGOkIGPjgGPjoGPkAGOkP/6/+MYxLMeKMLm/mFSXvv5j5//H8YYiKDn/xj//GMYYxj//8YxwYxjGOPgYxjH/8cYxjGMf///GMYx/HGMYxjA0f//GMYxoxjGMY+P//jGM+MH4iIhI/ER//4iEREf///8REZ//ERERERERETi/+MYxEIAAANIAcAAAEREQiO7u7u7u93d3bu8nd3d293d3d3d3dbu927u93d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3/+MYxEYAAANIAcAAAHd3d3d3d3d3d3d3d3d3d3d3dxEd3d3EREd3dxERHd3dxERHd3cRERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERP/7oxjEQAAAaQAAAABERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERE=";
+            audio.play();
         }
         
         // Mettre à jour la fonction login pour connecter le socket
@@ -1431,9 +1468,9 @@
         async function sendMessage() {
             const messageInput = document.getElementById("messageInput");
             const messageText = messageInput.value.trim();
-                
+
             if ((!messageText && !selectedFile) || !currentChat) return;
-                
+
             if (currentChat) {
                 socket.emit('stopTyping', {
                     userId: currentUser.id,
@@ -1449,22 +1486,22 @@
                     content: messageText,
                     timestamp: new Date().getTime()
                 };
-                
+
                 // Envoyer le message via socket
                 socket.emit('newMessage', newMessage);
-                
+
                 // Ajouter le message à la conversation locale
                 addMessageToChat(newMessage);
-                
+
                 messageInput.value = "";
             }
-            
+
             if (selectedFile) {
                 showStatus("Envoi du média en cours...");
-                
+
                 try {
                     const fileType = selectedFile.type.startsWith("image/") ? "image" : "video";
-                    
+
                     // Créer un message temporaire avec URL locale pour affichage immédiat
                     const tempUrl = URL.createObjectURL(selectedFile);
                     const tempMessage = {
@@ -1473,15 +1510,16 @@
                         receiverId: currentChat.id,
                         type: fileType,
                         content: tempUrl,
-                        timestamp: new Date().getTime()
+                        timestamp: new Date().getTime(),
+                        isTemp: true // Marquer comme message temporaire
                     };
-                    
+
                     // Afficher le message temporaire avec la prévisualisation locale
                     addMessageToChat(tempMessage);
-                    
+
                     // Envoyer vraiment le fichier au serveur
                     const filePath = await uploadMedia(selectedFile);
-                    
+
                     // Créer le vrai message avec l'URL du serveur
                     const newMediaMessage = {
                         senderId: currentUser.id,
@@ -1490,19 +1528,31 @@
                         content: filePath,
                         timestamp: new Date().getTime()
                     };
-                    
+
                     // Envoyer via socket
                     socket.emit('newMessage', newMediaMessage);
-                    
+
+                    // Mise à jour du message temporaire avec l'URL du serveur
+                    if (tempMessage.isTemp) {
+                        const tempElement = document.querySelector(`.message[data-temp-id="${tempMessage.id}"]`);
+                        if (tempElement) {
+                            if (fileType === "image") {
+                                tempElement.querySelector('img').src = filePath;
+                            } else if (fileType === "video") {
+                                tempElement.querySelector('video').src = filePath;
+                            }
+                        }
+                    }
+
                     // Reset media preview
                     mediaPreview.src = "";
                     mediaPreview.style.display = "none";
                     selectedFile = null;
                     document.getElementById("fileInput").value = "";
-                    
+
                     // Supprimer l'URL de l'objet temporaire pour libérer de la mémoire
                     URL.revokeObjectURL(tempUrl);
-                    
+
                     showStatus("Média envoyé avec succès");
                 } catch (error) {
                     showStatus("Erreur lors de l'envoi du média");
@@ -1662,6 +1712,47 @@
                     });
                 });
         
+                const styleElement = document.createElement('style');
+                styleElement.textContent = `
+                    .media-loading {
+                        position: absolute;
+                        bottom: 5px;
+                        right: 5px;
+                        background-color: rgba(0, 0, 0, 0.7);
+                        color: white;
+                        padding: 2px 6px;
+                        border-radius: 10px;
+                        font-size: 12px;
+                    }
+                            
+                    .message.sent .media-loading {
+                        right: 5px;
+                    }
+                            
+                    .message.received .media-loading {
+                        left: 5px;
+                    }
+                            
+                    .message {
+                        position: relative;
+                    }
+                            
+                    .chat-typing {
+                        padding: 5px 10px;
+                        margin: 5px;
+                        background-color: #f0f0f0;
+                        border-radius: 10px;
+                        align-self: flex-start;
+                        animation: typing 1s infinite;
+                    }
+                            
+                    @keyframes typing {
+                        0% { opacity: 0.3; }
+                        50% { opacity: 1; }
+                        100% { opacity: 0.3; }
+                    }
+                `;
+                document.head.appendChild(styleElement);
         // Supprimer la simulation de messages car nous utilisons maintenant des sockets
         // Supprimez ou commentez le code setInterval qui génère des messages aléatoires
     </script>
